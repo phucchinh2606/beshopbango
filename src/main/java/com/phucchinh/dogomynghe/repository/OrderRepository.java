@@ -1,6 +1,7 @@
 package com.phucchinh.dogomynghe.repository;
 
 import com.phucchinh.dogomynghe.entity.Order;
+import com.phucchinh.dogomynghe.entity.Product;
 import com.phucchinh.dogomynghe.entity.User;
 import com.phucchinh.dogomynghe.enums.OrderStatus;
 // Import thêm Page và Pageable
@@ -27,4 +28,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // 2. Lấy đơn hàng theo trạng thái (có phân trang)
     // (File bạn gửi đã có findByUserAndStatus, giờ chúng ta cần bản không theo User)
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
+    /**
+     * Kiểm tra xem User có đơn hàng nào ở trạng thái (DELIVERED)
+     * và chứa sản phẩm (Product) cụ thể không.
+     * Spring Data JPA sẽ tự động join các bảng: Order -> OrderItem -> Product
+     */
+    boolean existsByUserAndStatusAndItems_Product(User user, OrderStatus status, Product product);
 }

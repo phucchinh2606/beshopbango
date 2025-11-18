@@ -41,7 +41,8 @@ public enum ErrorCode {
 
     ORDER_CANNOT_BE_UPDATED(9001, "Ko thể cập nhật", HttpStatus.BAD_REQUEST),
 
-    ORDER_CANCEL_NOT_ALLOWED(7003, "Không thể hủy đơn hàng ở trạng thái này (chỉ được hủy khi 'Đang chờ xử lý').", HttpStatus.BAD_REQUEST);
+    ORDER_CANCEL_NOT_ALLOWED(7003, "Không thể hủy đơn hàng ở trạng thái này (chỉ được hủy khi 'Đang chờ xử lý').", HttpStatus.BAD_REQUEST),
+    REVIEW_NOT_ALLOWED(8888, "Ko đc phép review", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;
