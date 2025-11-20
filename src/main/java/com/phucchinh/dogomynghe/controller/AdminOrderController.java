@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/orders") // Đường dẫn riêng cho Admin
+@RequestMapping("/api/admin/orders") // Đường dẫn riêng cho Admin
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @PreAuthorize("hasRole('ADMIN')") // Bảo vệ toàn bộ Controller
