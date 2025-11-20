@@ -1,22 +1,27 @@
 package com.phucchinh.dogomynghe.service;
 
-import com.phucchinh.dogomynghe.dto.request.TokenRefreshRequest;
-import com.phucchinh.dogomynghe.dto.request.UserLoginRequest;
-import com.phucchinh.dogomynghe.dto.request.UserRegistrationRequest;
+import com.phucchinh.dogomynghe.Mapper.UserMapper;
+import com.phucchinh.dogomynghe.dto.request.*;
+import com.phucchinh.dogomynghe.dto.response.AddressResponse;
 import com.phucchinh.dogomynghe.dto.response.AuthResponse;
 import com.phucchinh.dogomynghe.dto.response.UserResponse;
 import com.phucchinh.dogomynghe.entity.Cart;
+import com.phucchinh.dogomynghe.entity.Image;
 import com.phucchinh.dogomynghe.entity.RefreshToken;
 import com.phucchinh.dogomynghe.entity.User;
 import com.phucchinh.dogomynghe.enums.ErrorCode;
+import com.phucchinh.dogomynghe.enums.ImageType;
 import com.phucchinh.dogomynghe.enums.UserRole;
 import com.phucchinh.dogomynghe.exception.AppException;
+import com.phucchinh.dogomynghe.repository.ImageRepository;
 import com.phucchinh.dogomynghe.repository.UserRepository;
 import com.phucchinh.dogomynghe.security.JwtBlacklistService;
 import com.phucchinh.dogomynghe.security.JwtTokenProvider;
+import com.phucchinh.dogomynghe.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +32,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.List;
 
 
 @Service
@@ -45,6 +52,14 @@ public class UserService {
 
     RefreshTokenService refreshTokenService;
     JwtBlacklistService jwtBlacklistService;
+
+    ImageRepository userImageRepository;
+
+    SecurityUtils securityUtils;
+
+    CloudinaryService  cloudinaryService;
+
+    UserMapper userMapper;
 
     /**
      * Chức năng Đăng ký người dùng mới.
@@ -117,6 +132,65 @@ public class UserService {
                 .userRole(user.getUserRole())
                 .build();
     }
+
+    // Update profile User
+    @Transactional
+    public void updateUserProfile(UserProfileRequest request) throws AppException {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        if (currentUserId == null) {
+            throw new AppException("User not logged in");
+        }
+
+        // Kiểm tra xem userId trong request có trùng với user đăng nhập không
+        if (!currentUserId.equals(request.getId())) {
+            throw new AppException("You can only update your own profile");
+        }
+        User user = userRepository.findById(currentUserId).orElseThrow(() -> new AppException("User not logged in"));
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setGender(request.getGender());
+        user.setDateOfBirth(request.getDateOfBirth());
+
+        updateAddress(user,request.getAddresses());
+
+        if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
+            String url = null;
+            try {
+                url = cloudinaryService.uploadFile(request.getImageFile(), "avatars");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            updateUserImage(user, url, ImageType.Avatar);
+        }
+        userRepository.save(user);
+
+    }
+
+    public void updateAddress(User user, List<AddressResponse> addressResponses) {
+        List<String> compactAddresses = addressResponses.stream()
+                .map(address -> String.join(", ", address.getAddress(), address.getWardName(), address.getProvinceName()))
+                .toList();
+
+        user.setAddresses(String.valueOf(compactAddresses));
+    }
+    public void updateUserImage(User user, String path, ImageType type) {
+        Image newUserImage = new Image();
+        newUserImage.setImagePath(path);
+        newUserImage.setType(type.name());
+        newUserImage.setLatest(true);
+        newUserImage.setUser(user);
+
+        Image oldUserImage = userImageRepository.findOneByUserAndTypeAndLatest(user, type.name(), true).orElse(null);
+        if (oldUserImage != null) {
+            oldUserImage.setLatest(false);
+            userImageRepository.saveAll(List.of(oldUserImage, newUserImage));
+        } else {
+            userImageRepository.save(newUserImage);
+        }
+    }
+
+
 
     // --- PHƯƠNG THỨC REFRESH TOKEN (Giả định đã có RefreshTokenService) ---
     @Transactional
