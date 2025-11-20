@@ -41,15 +41,12 @@ public class User implements UserDetails {
     @NotBlank(message = "Phone number is required!")
     String phoneNumber;
 
-    @Column(unique = true)
     @NotBlank(message = "DateOfBirth number is required!")
     String  dateOfBirth;
 
-    @Column(unique = true)
     @NotBlank(message = "Gender number is required!")
     String gender;
 
-    @Column(unique = true)
     String imgAvatar;
 
     String addresses;

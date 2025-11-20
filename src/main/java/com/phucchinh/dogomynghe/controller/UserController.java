@@ -3,16 +3,19 @@ package com.phucchinh.dogomynghe.controller;
 
 import com.phucchinh.dogomynghe.dto.request.TokenRefreshRequest;
 import com.phucchinh.dogomynghe.dto.request.UserLoginRequest;
+import com.phucchinh.dogomynghe.dto.request.UserProfileRequest;
 import com.phucchinh.dogomynghe.dto.request.UserRegistrationRequest;
 import com.phucchinh.dogomynghe.dto.response.AuthResponse;
 import com.phucchinh.dogomynghe.dto.response.UserResponse;
 import com.phucchinh.dogomynghe.exception.AppException;
 import com.phucchinh.dogomynghe.service.UserService;
+import com.phucchinh.dogomynghe.utils.ResponseBuilder;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -84,4 +87,16 @@ public class UserController {
 
         return userService.getMyInfo(username);
     }
+/*
+update thong tin nguoi dung
+ */
+    @PutMapping("update")
+    public ResponseEntity<Object> updateInfor(@ModelAttribute UserProfileRequest request) {
+
+        return ResponseBuilder.create()
+                .body(userService.updateUserProfile(request))
+                .status(HttpStatus.OK)
+                .build();
+    }
+
 }

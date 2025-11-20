@@ -135,39 +135,42 @@ public class UserService {
                 .build();
     }
 
-    // Update profile User
     @Transactional
-    public void updateUserProfile(UserProfileRequest request) throws AppException {
+    public UserResponse updateUserProfile(UserProfileRequest request) {
+
         Long currentUserId = securityUtils.getCurrentUserId();
         if (currentUserId == null) {
             throw new AppException("User not logged in");
         }
 
-        // Kiểm tra xem userId trong request có trùng với user đăng nhập không
         if (!currentUserId.equals(request.getId())) {
             throw new AppException("You can only update your own profile");
         }
-        User user = userRepository.findById(currentUserId).orElseThrow(() -> new AppException("User not logged in"));
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new AppException("User not found"));
+
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setGender(request.getGender());
         user.setDateOfBirth(request.getDateOfBirth());
 
-        updateAddress(user,request.getAddresses());
+        updateAddress(user, request.getAddresses());
 
         if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
-            String url = null;
             try {
-                url = cloudinaryService.uploadFile(request.getImageFile(), "avatars");
+                String url = cloudinaryService.uploadFile(request.getImageFile(), "avatars");
+                updateUserImage(user, url, ImageType.Avatar);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new AppException("Cannot upload avatar");
             }
-            updateUserImage(user, url, ImageType.Avatar);
         }
-        userRepository.save(user);
 
+        // save() không cần nếu user là entity đang managed.
+        return mapToUserResponse(user);
     }
+
 
     public void updateAddress(User user, List<AddressResponse> addressResponses) {
         List<String> compactAddresses = addressResponses.stream()
