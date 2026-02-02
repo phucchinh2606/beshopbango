@@ -10,7 +10,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,25 +23,40 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     CategoryRepository categoryRepository;
+    CloudinaryService cloudinaryService;
 
     // --- Mapper ---
     private CategoryResponse mapToResponse(Category category) {
         return CategoryResponse.builder()
                 .id(category.getId())
                 .name(category.getName())
+                .imageUrl(category.getImageUrl())
                 .createdAt(category.getCreatedAt())
                 .build();
     }
 
-    // 1. Thêm Danh mục (Create)
-    public CategoryResponse createCategory(CategoryRequest request) throws AppException {
+    // 1. Thêm Danh mục (Create) - với hình ảnh
+    @Transactional
+    public CategoryResponse createCategory(CategoryRequest request, MultipartFile file) throws AppException {
         // Kiểm tra trùng lặp tên danh mục
         if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
             throw new AppException(ErrorCode.CATEGORY_NAME_EXISTED);
         }
 
+        String imageUrl = null;
+        
+        // Upload hình ảnh nếu có
+        if (file != null && !file.isEmpty()) {
+            try {
+                imageUrl = cloudinaryService.uploadFile(file, "categories/");
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.UPLOAD_FAILED);
+            }
+        }
+
         Category category = Category.builder()
                 .name(request.getName())
+                .imageUrl(imageUrl)
                 .build();
 
         return mapToResponse(categoryRepository.save(category));
@@ -61,8 +79,9 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    // 4. Sửa Danh mục (Update)
-    public CategoryResponse updateCategory(Long categoryId, CategoryRequest request) throws AppException {
+    // 4. Sửa Danh mục (Update) - với hình ảnh
+    @Transactional
+    public CategoryResponse updateCategory(Long categoryId, CategoryRequest request, MultipartFile file) throws AppException {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
@@ -74,16 +93,42 @@ public class CategoryService {
         }
 
         category.setName(request.getName());
+        
+        // Xử lý hình ảnh nếu có upload file mới
+        if (file != null && !file.isEmpty()) {
+            try {
+                // Xóa ảnh cũ nếu tồn tại
+                if (category.getImageUrl() != null && !category.getImageUrl().isEmpty()) {
+                    cloudinaryService.deleteFile(category.getImageUrl());
+                }
+                
+                // Upload ảnh mới
+                String newImageUrl = cloudinaryService.uploadFile(file, "categories/");
+                category.setImageUrl(newImageUrl);
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.UPLOAD_FAILED);
+            }
+        }
 
         return mapToResponse(categoryRepository.save(category));
     }
 
     // 5. Xóa Danh mục (Delete)
+    @Transactional
     public void deleteCategory(Long categoryId) throws AppException {
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        
+        // Xóa hình ảnh khỏi Cloudinary nếu tồn tại
+        if (category.getImageUrl() != null && !category.getImageUrl().isEmpty()) {
+            try {
+                cloudinaryService.deleteFile(category.getImageUrl());
+            } catch (IOException e) {
+                // Log lỗi nhưng vẫn tiếp tục xóa category
+                System.err.println("Lỗi xóa ảnh: " + e.getMessage());
+            }
         }
-        // *Lưu ý: Trong thực tế, bạn nên kiểm tra xem có sản phẩm nào thuộc danh mục này không trước khi xóa.
+        
         categoryRepository.deleteById(categoryId);
     }
 }

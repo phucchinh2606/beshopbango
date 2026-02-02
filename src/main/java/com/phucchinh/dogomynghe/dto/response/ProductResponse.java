@@ -18,5 +18,6 @@ public class ProductResponse {
     String imageUrl; // URL ảnh
     Long price;
     CategoryResponse category; // Trả về thông tin danh mục
+    Integer stockQuantity;
     LocalDateTime createdAt;
 }

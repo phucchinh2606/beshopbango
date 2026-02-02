@@ -9,8 +9,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize; // Quan trọng cho phân quyền
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,32 +26,44 @@ public class CategoryController {
     // --- ADMIN CHỈ CÓ QUYỀN THỰC HIỆN CÁC THAO TÁC CRUD NÀY ---
 
     /**
-     * POST: Tạo danh mục mới
-     * Yêu cầu quyền ROLE_ADMIN
+     * POST: Tạo danh mục mới với hình ảnh
+     * Yêu cầu quyền ROLE_ADMIN hoặc EMPLOYEE
+     * Content-Type: multipart/form-data
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponse createCategory(@RequestBody @Valid CategoryRequest request) throws AppException {
-        return categoryService.createCategory(request);
+    public CategoryResponse createCategory(
+            @RequestParam String name,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws AppException {
+        CategoryRequest request = CategoryRequest.builder()
+                .name(name)
+                .build();
+        return categoryService.createCategory(request, image);
     }
 
     /**
-     * PUT: Cập nhật danh mục
-     * Yêu cầu quyền ROLE_ADMIN
+     * PUT: Cập nhật danh mục với hình ảnh
+     * Yêu cầu quyền ROLE_ADMIN hoặc EMPLOYEE
+     * Content-Type: multipart/form-data
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     @PutMapping("/{categoryId}")
-    public CategoryResponse updateCategory(@PathVariable Long categoryId,
-                                           @RequestBody @Valid CategoryRequest request) throws AppException {
-        return categoryService.updateCategory(categoryId, request);
+    public CategoryResponse updateCategory(
+            @PathVariable Long categoryId,
+            @RequestParam String name,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws AppException {
+        CategoryRequest request = CategoryRequest.builder()
+                .name(name)
+                .build();
+        return categoryService.updateCategory(categoryId, request, image);
     }
 
     /**
      * DELETE: Xóa danh mục
-     * Yêu cầu quyền ROLE_ADMIN
+     * Yêu cầu quyền ROLE_ADMIN hoặc EMPLOYEE
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     @DeleteMapping("/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable Long categoryId) throws AppException {
@@ -62,7 +75,6 @@ public class CategoryController {
     /**
      * GET: Lấy tất cả danh mục
      * Cho phép tất cả người dùng (hoặc công khai)
-     * (Tôi sẽ đặt là công khai .permitAll() hoặc chỉ cần authenticated() nếu không có .permitAll() ở Security Config)
      */
     @GetMapping
     public List<CategoryResponse> getAllCategories() {

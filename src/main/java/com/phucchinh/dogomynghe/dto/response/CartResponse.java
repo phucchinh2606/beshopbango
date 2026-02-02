@@ -3,6 +3,7 @@ package com.phucchinh.dogomynghe.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -13,7 +14,11 @@ import java.util.List;
 public class CartResponse {
 
     Long id; // ID của Cart
-    Long userId;
+
     List<CartItemResponse> items;
-    Long totalAmount; // Tổng tiền của tất cả các mặt hàng
+
+    // SỬA: Đổi từ totalAmount thành totalCartPrice cho khớp Service
+    Long totalCartPrice;
+
+    LocalDateTime createdAt;
 }

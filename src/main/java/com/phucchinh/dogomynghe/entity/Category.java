@@ -23,6 +23,8 @@ public class Category {
     @Column(unique = true)
     String name;
 
+    String imageUrl;
+
     @Column(name = "created_at")
     final LocalDateTime createdAt = LocalDateTime.now();
 

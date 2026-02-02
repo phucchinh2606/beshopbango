@@ -1,6 +1,6 @@
 package com.phucchinh.dogomynghe.enums;
 
-import lombok.Data;
+
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -15,7 +15,6 @@ public enum ErrorCode {
     UNAUTHENTICATED(2002, "Thông tin đăng nhập không hợp lệ.", HttpStatus.UNAUTHORIZED),
     EMAIL_EXISTED(2003, "Email đã được sử dụng.", HttpStatus.BAD_REQUEST),
     PHONE_NUMBER_EXISTED(2004, "Số điện thoại đã được sử dụng.", HttpStatus.BAD_REQUEST),
-    // ... thêm các lỗi khác
 
     // Internal Server Error
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi không xác định.", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -42,7 +41,13 @@ public enum ErrorCode {
     ORDER_CANNOT_BE_UPDATED(9001, "Ko thể cập nhật", HttpStatus.BAD_REQUEST),
 
     ORDER_CANCEL_NOT_ALLOWED(7003, "Không thể hủy đơn hàng ở trạng thái này (chỉ được hủy khi 'Đang chờ xử lý').", HttpStatus.BAD_REQUEST),
-    REVIEW_NOT_ALLOWED(8888, "Ko đc phép review", HttpStatus.BAD_REQUEST);
+    REVIEW_NOT_ALLOWED(8888, "Ko đc phép review", HttpStatus.BAD_REQUEST),
+
+    OUT_OF_STOCK(6004, "Sản phẩm này đã hết hàng hoặc không đủ số lượng.", HttpStatus.BAD_REQUEST),
+    REVIEW_ALREADY_EXISTED(9002, "Bạn đã đánh giá sản phẩm này rồi.", HttpStatus.BAD_REQUEST),
+    NEWS_EXISTED(2005, "Tin tức đã tồn tại.", HttpStatus.BAD_REQUEST),
+    NEWS_NOT_EXISTED(2006, "Tin tức không tồn tại.", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED(2007, "Tải ảnh thất bại.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;
     private final String message;

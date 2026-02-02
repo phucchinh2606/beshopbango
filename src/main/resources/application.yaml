@@ -18,7 +18,7 @@ spring:
 
 jwt:
   secret-key: ${JWT_SECRET_KEY}
-  expiration: 3600000 #1h
+  expiration: 7200000 #2h
   refresh-token:
     expiration: 604800000 #7day
 
@@ -26,3 +26,9 @@ cloudinary:
   cloud-name: ${CLOUD_NAME}
   api-key: ${API_KEY}
   api-secret: ${API_SECRET}
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE} # VNPay Terminal ID for sandbox
+  hash-secret: ${VNPAY_HASH_SECRET} # VNPay Secret Key
+  pay-url: ${VNPAY_PAY_URL}
+  return-url: ${VNPAY_RETURN_URL} # Frontend return URL (Vite default port is 5173)

@@ -37,38 +37,33 @@ public class ReviewService {
      */
     @Transactional
     public ReviewResponse createReview(String username, ReviewRequest request) {
+        // 1. Lấy User & Product (Giữ nguyên)
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // --- LOGIC KIỂM TRA ĐÃ MUA HÀNG ---
-        // Chỉ cho phép đánh giá nếu đơn hàng có chứa sản phẩm này VÀ trạng thái là DELIVERED
+        // 2. Kiểm tra Đã mua & Đã giao (Giữ nguyên)
         boolean hasPurchased = orderRepository.existsByUserAndStatusAndItems_Product(
-                user,
-                OrderStatus.DELIVERED,
-                product
+                user, OrderStatus.DELIVERED, product
         );
-
         if (!hasPurchased) {
             throw new AppException(ErrorCode.REVIEW_NOT_ALLOWED);
         }
-        // -----------------------------------
 
-        // (Tùy chọn) Kiểm tra xem user đã đánh giá sản phẩm này chưa để tránh spam
-        // if (reviewRepository.existsByUserAndProduct(user, product)) { ... }
+        // 👇 3. LOGIC MỚI: Kiểm tra đã review chưa
+        if (reviewRepository.existsByUserAndProduct(user, product)) {
+            throw new AppException(ErrorCode.REVIEW_ALREADY_EXISTED);
+        }
 
+        // 4. Lưu review (Giữ nguyên)
         Review review = Review.builder()
                 .user(user)
                 .product(product)
                 .rating(request.getRating())
                 .comment(request.getComment())
                 .build();
-
-        Review savedReview = reviewRepository.save(review);
-
-        return mapToReviewResponse(savedReview);
+        return mapToReviewResponse(reviewRepository.save(review));
     }
 
     /**

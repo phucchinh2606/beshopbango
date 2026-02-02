@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,6 +21,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     JwtTokenProvider jwtTokenProvider;
@@ -59,9 +61,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Thiết lập Authentication vào SecurityContext.
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                // DEBUG: log authenticated username and authorities
+                log.info("JWT auth success for user='{}', authorities={}", username, userDetails.getAuthorities());
+            }
+            else {
+                if (jwt == null) {
+                    log.debug("No JWT token found in request");
+                } else {
+                    log.debug("JWT token present but invalid");
+                }
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e);
+            log.error("Cannot set user authentication: {}", e);
         }
 
         filterChain.doFilter(request, response);

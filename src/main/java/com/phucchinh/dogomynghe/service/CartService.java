@@ -3,6 +3,7 @@ package com.phucchinh.dogomynghe.service;
 import com.phucchinh.dogomynghe.dto.request.CartItemRequest;
 import com.phucchinh.dogomynghe.dto.response.CartItemResponse;
 import com.phucchinh.dogomynghe.dto.response.CartResponse;
+import com.phucchinh.dogomynghe.dto.response.ProductMinimalResponse;
 import com.phucchinh.dogomynghe.entity.Cart;
 import com.phucchinh.dogomynghe.entity.CartItem;
 import com.phucchinh.dogomynghe.entity.Product;
@@ -54,12 +55,16 @@ public class CartService {
         Product product = item.getProduct();
         Long subtotal = product.getPrice() * item.getQuantity();
 
+        ProductMinimalResponse productResponse = ProductMinimalResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
+                .build();
+
         return CartItemResponse.builder()
                 .id(item.getId())
-                .productId(product.getId())
-                .productName(product.getName())
-                .productImageUrl(product.getImageUrl())
-                .price(product.getPrice())
+                .product(productResponse)
                 .quantity(item.getQuantity())
                 .subtotal(subtotal)
                 .build();
@@ -70,15 +75,15 @@ public class CartService {
                 .map(this::mapToCartItemResponse)
                 .collect(Collectors.toList());
 
-        Long totalAmount = itemResponses.stream()
+        Long totalCartPrice = itemResponses.stream()
                 .mapToLong(CartItemResponse::getSubtotal)
                 .sum();
 
         return CartResponse.builder()
                 .id(cart.getId())
-                .userId(cart.getUser().getId())
                 .items(itemResponses)
-                .totalAmount(totalAmount)
+                .totalCartPrice(totalCartPrice)
+                .createdAt(cart.getCreatedAt())
                 .build();
     }
 

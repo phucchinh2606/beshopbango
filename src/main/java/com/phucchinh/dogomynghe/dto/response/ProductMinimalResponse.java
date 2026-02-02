@@ -13,4 +13,5 @@ public class ProductMinimalResponse {
     String name;
     String imageUrl;
     Long price; // Giá hiện tại (để tham khảo)
+    Integer stockQuantity;
 }

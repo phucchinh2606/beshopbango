@@ -48,6 +48,25 @@ public class Order {
     @JoinColumn(name = "shipping_address_id")
     Address shippingAddress;
 
+    // Payment information for VNPay
+    @Column(name = "payment_method")
+    String paymentMethod = "COD"; // COD or VNPAY
+
+    @Column(name = "payment_status")
+    String paymentStatus = "PENDING"; // PENDING, PAID, FAILED, REFUNDED
+
+    @Column(name = "vnp_transaction_no")
+    String vnpTransactionNo;
+
+    @Column(name = "vnp_response_code")
+    String vnpResponseCode;
+
+    @Column(name = "vnp_secure_hash")
+    String vnpSecureHash;
+
+    @Column(name = "paid_at")
+    LocalDateTime paidAt;
+
     @Column(name = "created_at")
     final LocalDateTime createdAt = LocalDateTime.now();
 }

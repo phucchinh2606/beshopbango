@@ -20,12 +20,17 @@ public class Product {
     Long id;
 
     String name;
+    @Column(columnDefinition = "TEXT")
     String description;
     String imageUrl;
     Long price;
 
+    // 👇 1. THÊM TRƯỜNG TỒN KHO
+    @Builder.Default // Giá trị mặc định khi build là 0
+            Integer stockQuantity = 0;
+
     @Column(name = "created_at")
-    final LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

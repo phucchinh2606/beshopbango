@@ -24,4 +24,8 @@ public class ProductRequest {
 
     @NotNull(message = "Danh mục sản phẩm không được để trống!")
     Long categoryId; // ID của danh mục
+
+    // 👇 2. THÊM TRƯỜNG NÀY CHO ADMIN NHẬP KHO
+    @Min(value = 0, message = "Số lượng tồn kho không hợp lệ.")
+    Integer stockQuantity;
 }

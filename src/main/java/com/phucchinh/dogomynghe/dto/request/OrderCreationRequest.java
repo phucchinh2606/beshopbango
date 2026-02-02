@@ -23,4 +23,6 @@ public class OrderCreationRequest {
     List<Long> cartItemIds;
 
     String customerNote; // Giữ lại ghi chú (Tôi sẽ thêm vào Order entity)
+
+    String paymentMethod = "COD"; // COD or VNPAY
 }

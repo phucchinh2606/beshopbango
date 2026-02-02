@@ -6,11 +6,13 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -31,9 +33,14 @@ public class JwtTokenProvider {
     public String generateToken(Authentication authentication) {
         // Lấy thông tin UserDetails từ đối tượng Authentication
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        // Lấy quyền của user để cho vào token
+        String authorities = userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
 
         return Jwts.builder()
                 .setSubject((userPrincipal.getUsername())) // Đặt Subject là Username
+                .claim("roles", authorities)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)) // Thời gian hết hạn
                 .signWith(key(), SignatureAlgorithm.HS256) // Ký với thuật toán HS256
@@ -41,6 +48,7 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(UserDetails userDetails) {
+
         return Jwts.builder()
                 .setSubject((userDetails.getUsername())) // Đặt Subject là Username
                 .setIssuedAt(new Date())

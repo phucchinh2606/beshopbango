@@ -27,4 +27,9 @@ public class OrderResponse {
 
     // ⭐️ TRƯỜNG MỚI: Thông tin người đặt hàng
     UserMinimalResponse user;
+
+    // Payment information
+    String paymentMethod;
+    String paymentStatus;
+    LocalDateTime paidAt;
 }

@@ -14,5 +14,6 @@ public class CategoryResponse {
 
     Long id;
     String name;
+    String imageUrl;
     LocalDateTime createdAt;
 }

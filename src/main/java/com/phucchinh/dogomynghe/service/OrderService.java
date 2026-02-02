@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class OrderService {
     OrderRepository orderRepository;
     AddressRepository addressRepository;
     CartItemRepository cartItemRepository; // Cần để xóa CartItem
+    ProductRepository productRepository;
 
 
     // Mappers (Giả sử bạn có AddressService hoặc mappers riêng)
@@ -62,7 +64,9 @@ public class OrderService {
         List<Long> requestedItemIds = request.getCartItemIds();
 
         // Dùng phương thức Repository mới để lấy CHÍNH XÁC các item hợp lệ
-        List<CartItem> itemsToCheckout = cartItemRepository.findAllByIdInAndCart(requestedItemIds, cart);
+        List<CartItem> itemsToCheckout = cartItemRepository.findAllById(requestedItemIds).stream()
+                .filter(item -> item.getCart().getUser().getId().equals(user.getId()))
+                .collect(Collectors.toList());
 
         // 4. Xác thực các sản phẩm đã chọn
         if (itemsToCheckout.isEmpty()) {
@@ -74,6 +78,24 @@ public class OrderService {
             // Cảnh báo: Người dùng có thể đã gửi ID rác hoặc ID của giỏ hàng khác
             log.warn("User {} requested {} items but only {} were valid/found in their cart.",
                     user.getId(), requestedItemIds.size(), itemsToCheckout.size());
+        }
+
+        // --- 👇 LOGIC KIỂM TRA & TRỪ KHO ---
+        for (CartItem cartItem : itemsToCheckout) {
+            Product product = cartItem.getProduct();
+            int requestedQty = cartItem.getQuantity();
+
+            // 1. Kiểm tra đủ hàng không
+            if (product.getStockQuantity() < requestedQty) {
+                throw new AppException(ErrorCode.OUT_OF_STOCK);
+                // Bạn có thể throw lỗi chi tiết hơn: "Sản phẩm " + product.getName() + " không đủ hàng."
+            }
+
+            // 2. Trừ kho
+            product.setStockQuantity(product.getStockQuantity() - requestedQty);
+
+            // 3. Lưu lại Product (JPA sẽ tự update khi commit transaction)
+            // productRepository.save(product); // Không cần thiết nếu đang trong @Transactional, nhưng gọi cho chắc cũng được
         }
 
         // 5. Tính tổng tiền (CHỈ TÍNH DỰA TRÊN itemsToCheckout)
@@ -88,6 +110,7 @@ public class OrderService {
                 .totalAmount(totalAmount)
                 .status(OrderStatus.PENDING)
                 .customerNote(request.getCustomerNote()) // Thêm Ghi chú
+                .paymentMethod(request.getPaymentMethod()) // Thêm phương thức thanh toán
                 .build();
 
         // 7. Chuyển CartItem (ĐÃ CHỌN) sang OrderItem
@@ -155,6 +178,13 @@ public class OrderService {
     public Page<OrderResponse> adminGetAllOrders(Pageable pageable) {
         // Dùng phương thức findAll(Pageable) của JpaRepository
         Page<Order> orderPage = orderRepository.findAll(pageable);
+        
+        System.out.println("adminGetAllOrders - Total orders: " + orderPage.getTotalElements());
+        System.out.println("adminGetAllOrders - Page size: " + pageable.getPageSize());
+        System.out.println("adminGetAllOrders - Page number: " + pageable.getPageNumber());
+        orderPage.getContent().forEach(order -> {
+            System.out.println("Order ID: " + order.getId() + ", Status: " + order.getStatus());
+        });
 
         // Dùng .map() của Page để chuyển đổi Order Entity sang OrderResponse DTO
         return orderPage.map(this::mapToOrderResponse);
@@ -234,11 +264,16 @@ public class OrderService {
             throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
         }
 
-        // 4. Cập nhật trạng thái
+        // 1. Cập nhật trạng thái
         order.setStatus(OrderStatus.CANCELLED);
 
-        // 5. (Nâng cao) Logic hoàn trả tồn kho (sẽ làm ở bước sau)
-        // ...
+        // 2. Hoàn trả số lượng về kho
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            // Cộng lại số lượng đã mua
+            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+            productRepository.save(product);
+        }
 
         // 6. Lưu và trả về
         Order savedOrder = orderRepository.save(order);
@@ -279,6 +314,9 @@ public class OrderService {
                 .shippingAddress(addressResponse)
                 .items(itemResponses)
                 .user(userResponse) // ⭐️ GÁN DỮ LIỆU USER VÀO RESPONSE
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
+                .paidAt(order.getPaidAt())
                 .build();
     }
 

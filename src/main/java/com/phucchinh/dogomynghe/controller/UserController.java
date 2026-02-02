@@ -4,6 +4,7 @@ package com.phucchinh.dogomynghe.controller;
 import com.phucchinh.dogomynghe.dto.request.TokenRefreshRequest;
 import com.phucchinh.dogomynghe.dto.request.UserLoginRequest;
 import com.phucchinh.dogomynghe.dto.request.UserRegistrationRequest;
+import com.phucchinh.dogomynghe.dto.request.UserRoleUpdateRequest;
 import com.phucchinh.dogomynghe.dto.response.AuthResponse;
 import com.phucchinh.dogomynghe.dto.response.UserResponse;
 import com.phucchinh.dogomynghe.exception.AppException;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -83,5 +86,36 @@ public class UserController {
         String username = authentication.getName();
 
         return userService.getMyInfo(username);
+    }
+
+    /**
+     * GET /api/users/all
+     * Lấy danh sách tất cả người dùng (chỉ dành cho ADMIN)
+     */
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserResponse> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    /**
+     * PUT /api/users/{id}/role
+     * Cập nhật vai trò của người dùng (chỉ dành cho ADMIN)
+     */
+    @PutMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse updateUserRole(@PathVariable Long id, @RequestBody @Valid UserRoleUpdateRequest request) {
+        return userService.updateUserRole(id, request.getNewRole());
+    }
+
+    /**
+     * DELETE /api/users/{id}
+     * Xóa người dùng (chỉ dành cho ADMIN)
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
     }
 }

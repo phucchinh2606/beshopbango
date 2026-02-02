@@ -15,4 +15,7 @@ public class CategoryRequest {
     String name;
 
     String description;
+    
+    // imageUrl sẽ được upload thông qua MultipartFile trong controller, 
+    // không cần trong request body
 }

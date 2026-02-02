@@ -18,7 +18,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
     // Phương thức này được Spring Security gọi để tải thông tin người dùng
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Tìm User entity
 
         // Trả về chính Entity User, vì nó đã implement UserDetails
         return userRepository.findByUsername(username)

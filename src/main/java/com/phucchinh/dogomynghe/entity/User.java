@@ -42,6 +42,7 @@ public class User implements UserDetails {
     String phoneNumber;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     UserRole userRole = UserRole.ROLE_USER;
 
     @Column(name = "created_at")

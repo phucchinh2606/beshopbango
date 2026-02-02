@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,4 +20,9 @@ public class UserResponse {
     String phoneNumber;
     UserRole userRole;
     LocalDateTime createdAt;
+
+    // 👇 BẮT BUỘC PHẢI CÓ CÁC TRƯỜNG NÀY 👇
+    List<AddressResponse> addresses;
+    CartResponse cart;
+    List<OrderResponse> orders;
 }

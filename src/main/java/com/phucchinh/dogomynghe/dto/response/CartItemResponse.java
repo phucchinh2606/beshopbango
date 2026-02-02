@@ -11,10 +11,12 @@ import lombok.experimental.FieldDefaults;
 public class CartItemResponse {
 
     Long id; // ID của CartItem
-    Long productId;
-    String productName;
-    String productImageUrl;
-    Long price; // Giá bán (đơn vị)
+
+    // SỬA: Thay thế các trường rời (id, name, img, price) bằng Object này
+    ProductMinimalResponse product;
+
     int quantity;
-    Long subtotal; // Thành tiền: price * quantity
+
+    // Giữ lại subtotal để Frontend đỡ phải tính
+    Long subtotal;
 }
