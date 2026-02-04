@@ -1,0 +1,43 @@
+services:
+  db_container_name:
+    image: mysql:8.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: cuahangdogo
+    ports:
+      - "3311:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: .
+    container_name: springboot_app
+    ports:
+      - "1234:1234" # Theo port 1234 trong file yaml
+    depends_on:
+      - db_container_name
+    env_file: .env
+    environment:
+      # Kết nối DB: Tên host phải khớp với tên service 'db_container_name'
+      DB_HOST: jdbc:mysql://db_container_name:3306/cuahangdogo?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # JWT & Khác
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+
+      # Cloudinary
+      CLOUD_NAME: ${CLOUD_NAME}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+
+      # VNPay
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET}
+      VNPAY_PAY_URL: ${VNPAY_PAY_URL}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL}
+
+volumes:
+  mysql_data:
